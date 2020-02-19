@@ -16,46 +16,67 @@ pub fn main() !void {
     // defer arena.deinit();
     // var allocator = arena.allocator;
     var allocator = std.heap.page_allocator;
+    const tokens = try scan(allocator, input);
+    std.debug.warn("{}\n", .{tokens.len});
+}
 
-    // std.debug.warn("{}\n", .{input});
-    // std.debug.warn("{}\n", .{expected});
-
+fn scan(allocator: *std.mem.Allocator, js: []const u8) !ArrayList(Token) {
     var al = ArrayList(Token).init(allocator);
-
-    // std.debug.warn("{}\n", .{al.at(0)});
-    // std.debug.warn("{}\n", .{al.at(0)});
-    for (input) |c| {
+    const end_of_input = js.len;
+    var pos: usize = 0;
+    var start: usize = undefined;
+    while (pos != end_of_input) {
+        const c = js[pos];
         switch (c) {
             '{' => {
                 try al.append(Token{ .LEFT_CURLY = undefined });
+                pos += 1;
             },
             '}' => {
                 try al.append(Token{ .RIGHT_CURLY = undefined });
+                pos += 1;
             },
             '[' => {
                 try al.append(Token{ .LEFT_SQUARE = undefined });
+                pos += 1;
             },
             ']' => {
                 try al.append(Token{ .RIGHT_SQUARE = undefined });
+                pos += 1;
             },
             ':' => {
                 try al.append(Token{ .COLON = undefined });
+                pos += 1;
             },
             ',' => {
                 try al.append(Token{ .COMMA = undefined });
+                pos += 1;
+            },
+            '"' => {
+                pos += 1;
+                start = pos;
+                while (js[pos] != '"' and js[pos - 1] != '\\') {
+                    pos += 1;
+                }
+                const str_len = pos - start;
+                const str_literal = try allocator.alloc(u8, str_len);
+                std.mem.copy(u8, str_literal, js[start..pos]);
+                try al.append(Token{ .STRING = str_literal });
+                pos += 1;
             },
             else => {
-                const arr: [1]u8 = [1]u8{c};
-                const res = try allocator.alloc(u8, 1);
-                std.mem.copy(u8, res, arr[0..]);
-                std.debug.warn("{}\n", .{res});
-                try al.append(Token{ .STRING = res });
+                if (whitespace(c)) {
+                    pos += 1;
+                } else {
+                    std.debug.warn("?{}\n", .{js[pos]});
+                    pos += 1;
+                }
             },
         }
     }
-    std.debug.warn("{}\n", .{al.capacity()});
-    std.debug.warn("{}\n", .{al.at(0)});
-    std.debug.warn("{}\n", .{al.at(1)});
-    std.debug.warn("{}\n", .{al.at(2)});
-    std.debug.warn("{}\n", .{al.at(25)});
+    return al;
+}
+
+fn whitespace(char: u8) bool {
+    return char == ' ' or char == '\r' or char == '\t' or char == '\n';
 }

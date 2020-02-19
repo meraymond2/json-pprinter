@@ -17,7 +17,7 @@ pub fn main() !void {
     // var allocator = arena.allocator;
     var allocator = std.heap.page_allocator;
     const tokens = try scan(allocator, input);
-    std.debug.warn("{}\n", .{tokens.len});
+    print(tokens.toSlice());
 }
 
 fn scan(allocator: *std.mem.Allocator, js: []const u8) !ArrayList(Token) {
@@ -79,4 +79,20 @@ fn scan(allocator: *std.mem.Allocator, js: []const u8) !ArrayList(Token) {
 
 fn whitespace(char: u8) bool {
     return char == ' ' or char == '\r' or char == '\t' or char == '\n';
+}
+
+fn print(tokens: []Token) void {
+    for (tokens) |t| {
+        switch (t) {
+            Token.LEFT_CURLY => std.debug.warn("{{\n", .{}),
+            Token.RIGHT_CURLY => std.debug.warn("\n}}", .{}),
+            Token.COLON => std.debug.warn(":", .{}),
+            Token.COMMA => std.debug.warn(",\n", .{}),
+            Token.STRING => |s| std.debug.warn("\"{}\"", .{s}),
+            else => {
+                std.debug.warn("?", .{});
+            },
+        }
+    }
+    std.debug.warn("\n", .{});
 }

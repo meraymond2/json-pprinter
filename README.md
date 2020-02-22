@@ -14,7 +14,7 @@ Not sure about error handling, I’m not sure if I want to parse the JSON, or ju
 3. Handle arrays.
 4. Handle string escapes?
 5. Fix allocation - use arena allocator
-6. String-tokens can be pointers to input string, since I'll keep that in memory anyway.
+6. String-tokens can possibly be pointers to input string, since I'll keep that in memory anyway. Unless I stream the input.
 7. Fix output, can I speed up/stream the printing somehow?
 
 (Json spec)[http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf]

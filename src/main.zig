@@ -1,6 +1,6 @@
 const std = @import("std");
+const io = std.io;
 const ArrayList = std.ArrayList;
-const input = @import("inp.zig").input;
 
 const tab = "  ";
 
@@ -12,12 +12,40 @@ const Token = union(TokenTag) {
 };
 
 pub fn main() !void {
+    // Uncomment this when I can get the arena allocator to stop seg-faulting :(
     // var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     // defer arena.deinit();
     // var allocator = arena.allocator;
     var allocator = std.heap.page_allocator;
-    const tokens = try scan(allocator, input);
+
+    // For now, keep it all in memory. Maybe later,
+    // think about streaming it.
+
+    // Initialise a buffer, length pulled out of a hat.
+    var a: [5000]u8 = undefined;
+    var buf = a[0..a.len];
+
+    // Get the stdin as a stream.
+    var stdin = std.io.getStdIn().inStream().stream;
+
+
+    var bytes_read = try stdin.read(buf);
+    const first_chunk_slice = try allocator.alloc(u8, bytes_read);
+    std.mem.copy(u8, first_chunk_slice, buf[0..bytes_read]);
+
+    // Loop through stream until everything is read.
+    var full_input = buf[0..0];
+    while (bytes_read > 0) : ({ bytes_read = try stdin.read(buf); }) {
+        full_input = try std.fmt.allocPrint(allocator, "{}{}", .{full_input, buf[0..bytes_read]});
+    }
+
+    // Scan
+    const tokens = try scan(allocator, full_input);
+
+    // Print
     pprint(tokens.toSlice());
+
+    // Profit $$
 }
 
 fn scan(allocator: *std.mem.Allocator, js: []const u8) !ArrayList(Token) {
@@ -55,6 +83,10 @@ fn scan(allocator: *std.mem.Allocator, js: []const u8) !ArrayList(Token) {
             '"' => {
                 pos += 1;
                 start = pos;
+                if (pos >= end_of_input) {
+                    std.debug.warn("Bleh, {}\n", .{pos});
+                    @panic("noooo!!!!!");
+                }
                 while (js[pos] != '"' and js[pos - 1] != '\\') {
                     pos += 1;
                 }
@@ -68,7 +100,7 @@ fn scan(allocator: *std.mem.Allocator, js: []const u8) !ArrayList(Token) {
                 if (whitespace(c)) {
                     pos += 1;
                 } else {
-                    std.debug.warn("?{}\n", .{js[pos]});
+                    std.debug.warn("?{}", .{pos});
                     pos += 1;
                 }
             },

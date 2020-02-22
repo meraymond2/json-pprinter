@@ -1,0 +1,23 @@
+{\n\t"cas": {\n\t\t"colour": "black & white",\n\t\t"soft": "true"\n\t}\n}
+
+COLON - `: `
+
+{\n\t"cas"COLON{\n\t\t"colour"COLON"black & white",\n\t\t"soft"COLON"true"\n\t}\n}
+
+STR - `"$LITERAL"`
+
+{\n\tSTRCOLON{\n\t\tSTRCOLONSTR,\n\t\tSTRCOLONSTR\n\t}\n}
+
+Each LBRACE increments $INDENT, each RBRACE decrements $INDENT
+
+LBRACE - `{\n$(\t * $INDENT)`
+
+LBRACE(1)STRCOLONLBRACE(2)STRCOLONSTR,\n\t\tSTRCOLONSTR\n\t}\n}
+
+RBRACE - `\n$(\t * $INDENT)}`
+
+LBRACE(1)STRCOLONLBRACE(2)STRCOLONSTR,\n\t\tSTRCOLONSTRRBRACE(1)RBRACE(0)
+
+COMMA - `,\n$(\t * $INDENT)`
+
+LBRACE(1)STRCOLONLBRACE(2)STRCOLONSTRCOMMASTRCOLONSTRRBRACE(1)RBRACE(0)

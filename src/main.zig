@@ -1,14 +1,14 @@
 const std = @import("std");
 const ArrayList = std.ArrayList;
+const input = @import("inp.zig").input;
 
-const input = "{\"cas\":\"cat\",\"luna\":\"bee\"}";
-const expected = "{\n\t\"cas\": \"cat\",\n\t\"luna\": \"bee\"\n}";
+const tab = "  ";
 
 const TokenTag = enum {
-    LEFT_CURLY, RIGHT_CURLY, LEFT_SQUARE, RIGHT_SQUARE, COLON, COMMA, STRING, NUMBER, TRUE, FALSE
+    LBRACE, RBRACE, LSQUARE, RSQUARE, COLON, COMMA, STRING, NUMBER, TRUE, FALSE
 };
 const Token = union(TokenTag) {
-    LEFT_CURLY: void, RIGHT_CURLY: void, LEFT_SQUARE: void, RIGHT_SQUARE: void, COLON: void, COMMA: void, STRING: []const u8, NUMBER: f64, TRUE: void, FALSE: void
+    LBRACE: void, RBRACE: void, LSQUARE: void, RSQUARE: void, COLON: void, COMMA: void, STRING: []const u8, NUMBER: f64, TRUE: void, FALSE: void
 };
 
 pub fn main() !void {
@@ -17,7 +17,7 @@ pub fn main() !void {
     // var allocator = arena.allocator;
     var allocator = std.heap.page_allocator;
     const tokens = try scan(allocator, input);
-    print(tokens.toSlice());
+    pprint(tokens.toSlice());
 }
 
 fn scan(allocator: *std.mem.Allocator, js: []const u8) !ArrayList(Token) {
@@ -29,19 +29,19 @@ fn scan(allocator: *std.mem.Allocator, js: []const u8) !ArrayList(Token) {
         const c = js[pos];
         switch (c) {
             '{' => {
-                try al.append(Token{ .LEFT_CURLY = undefined });
+                try al.append(Token{ .LBRACE = undefined });
                 pos += 1;
             },
             '}' => {
-                try al.append(Token{ .RIGHT_CURLY = undefined });
+                try al.append(Token{ .RBRACE = undefined });
                 pos += 1;
             },
             '[' => {
-                try al.append(Token{ .LEFT_SQUARE = undefined });
+                try al.append(Token{ .LSQUARE = undefined });
                 pos += 1;
             },
             ']' => {
-                try al.append(Token{ .RIGHT_SQUARE = undefined });
+                try al.append(Token{ .RSQUARE = undefined });
                 pos += 1;
             },
             ':' => {
@@ -81,14 +81,36 @@ fn whitespace(char: u8) bool {
     return char == ' ' or char == '\r' or char == '\t' or char == '\n';
 }
 
-fn print(tokens: []Token) void {
+fn printIndent(n: usize) void {
+    var i = n;
+    while (i > 0) : ({
+        i -= 1;
+    }) {
+        std.debug.warn(tab, .{});
+    }
+}
+
+fn pprint(tokens: []Token) void {
+    var indent: usize = 0;
     for (tokens) |t| {
         switch (t) {
-            Token.LEFT_CURLY => std.debug.warn("{{\n", .{}),
-            Token.RIGHT_CURLY => std.debug.warn("\n}}", .{}),
-            Token.COLON => std.debug.warn(":", .{}),
-            Token.COMMA => std.debug.warn(",\n", .{}),
             Token.STRING => |s| std.debug.warn("\"{}\"", .{s}),
+            Token.COLON => std.debug.warn(": ", .{}),
+            Token.COMMA => {
+                std.debug.warn(",\n", .{});
+                printIndent(indent);
+            },
+            Token.LBRACE => {
+                indent += 1;
+                std.debug.warn("{{\n", .{});
+                printIndent(indent);
+            },
+            Token.RBRACE => {
+                indent -= 1;
+                std.debug.warn("\n", .{});
+                printIndent(indent);
+                std.debug.warn("}}", .{});
+            },
             else => {
                 std.debug.warn("?", .{});
             },

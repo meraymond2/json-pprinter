@@ -17,6 +17,7 @@ pub fn pprint(tokens: []Token) void {
     for (tokens) |t| {
         switch (t) {
             Token.STRING => |s| std.debug.warn("\"{}\"", .{s}),
+            Token.NUMBER => |n| std.debug.warn("{}", .{n}),
             Token.TRUE => std.debug.warn("{}", .{"true"}),
             Token.FALSE => std.debug.warn("{}", .{"false"}),
             Token.NULL => std.debug.warn("{}", .{"null"}),
@@ -30,11 +31,28 @@ pub fn pprint(tokens: []Token) void {
                 std.debug.warn("{{\n", .{});
                 printIndent(indent);
             },
+            Token.LSQUARE => {
+                indent += 1;
+                std.debug.warn("[\n", .{});
+                printIndent(indent);
+            },
             Token.RBRACE => {
                 indent -= 1;
                 std.debug.warn("\n", .{});
                 printIndent(indent);
                 std.debug.warn("}}", .{});
+            },
+            Token.RSQUARE => {
+                indent -= 1;
+                std.debug.warn("\n", .{});
+                printIndent(indent);
+                std.debug.warn("]", .{});
+            },
+            Token.EMPTY_OBJ => {
+                std.debug.warn("{{}}", .{});
+            },
+            Token.EMPTY_ARR => {
+                std.debug.warn("[]", .{});
             },
             else => {
                 std.debug.warn("?", .{});

@@ -17,6 +17,9 @@ pub fn pprint(tokens: []Token) void {
     for (tokens) |t| {
         switch (t) {
             Token.STRING => |s| std.debug.warn("\"{}\"", .{s}),
+            Token.TRUE => std.debug.warn("{}", .{"true"}),
+            Token.FALSE => std.debug.warn("{}", .{"false"}),
+            Token.NULL => std.debug.warn("{}", .{"null"}),
             Token.COLON => std.debug.warn(": ", .{}),
             Token.COMMA => {
                 std.debug.warn(",\n", .{});

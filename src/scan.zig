@@ -41,10 +41,6 @@ pub fn scan(allocator: *std.mem.Allocator, js: []const u8) !ArrayList(Token) {
             '"' => {
                 pos += 1;
                 start = pos;
-                if (pos >= end_of_input) {
-                    std.debug.warn("Bleh, {}\n", .{pos});
-                    @panic("noooo!!!!!");
-                }
                 while (js[pos] != '"' and js[pos - 1] != '\\') {
                     pos += 1;
                 }
@@ -53,6 +49,27 @@ pub fn scan(allocator: *std.mem.Allocator, js: []const u8) !ArrayList(Token) {
                 std.mem.copy(u8, str_literal, js[start..pos]);
                 try al.append(Token{ .STRING = str_literal });
                 pos += 1;
+            },
+            't' => {
+              const expected_end = pos + 4;
+              if (expected_end >= end_of_input) @panic("unterminated literal!!");
+              if (!std.mem.eql(u8, js[pos..expected_end], "true")) @panic("invalid literal");
+              try al.append(Token{ .TRUE = undefined });
+              pos = expected_end;
+            },
+            'f' => {
+              const expected_end = pos + 5;
+              if (expected_end >= end_of_input) @panic("unterminated literal!!");
+              if (!std.mem.eql(u8, js[pos..expected_end], "false")) @panic("invalid literal");
+              try al.append(Token{ .FALSE = undefined });
+              pos = expected_end;
+            },
+            'n' => {
+              const expected_end = pos + 4;
+              if (expected_end >= end_of_input) @panic("unterminated literal!!");
+              if (!std.mem.eql(u8, js[pos..expected_end], "null")) @panic("invalid literal");
+              try al.append(Token{ .NULL = undefined });
+              pos = expected_end;
             },
             else => {
                 if (whitespace(c)) {

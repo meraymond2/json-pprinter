@@ -4,6 +4,7 @@ const BUFFER_LENGTH = 1024;
 
 const TokenTag = enum {
     START,
+    STRING,
     LBRACE,
     RBRACE,
     LBRACKET,
@@ -14,6 +15,7 @@ const TokenTag = enum {
 
 pub const Token = union(TokenTag) {
     START: void,
+    STRING: []u8,
     LBRACE: void,
     RBRACE: void,
     LBRACKET: void,
@@ -51,7 +53,7 @@ fn scan(stream: *std.io.InStream(std.os.ReadError)) !void {
     while (bytes_read > 0) : ({
         bytes_read = try stream.read(buf);
     }) {
-        std.debug.warn("{}", .{bytes_read});
+        // std.debug.warn("{}", .{bytes_read});
         // TODO: I'd prefer to return a stream rather than nest printing under
         // scanning, if that's possible.
         const last_token = scanBuf(buf, prev_char, prev_token, &indent);
@@ -72,8 +74,18 @@ fn scanBuf(buf: []u8, prev_char: u8, prev_token: Token, indent: *usize) Token {
     while (pos != end) {
         const c = buf[pos];
         switch (c) {
+            '{' => {
+                current_token = Token{ .LBRACE = undefined };
+                printToken(current_token, indent);
+                pos += 1;
+            },
             '}' => {
                 current_token = Token{ .RBRACE = undefined };
+                printToken(current_token, indent);
+                pos += 1;
+            },
+            '[' => {
+                current_token = Token{ .LBRACKET = undefined };
                 printToken(current_token, indent);
                 pos += 1;
             },
@@ -92,6 +104,17 @@ fn scanBuf(buf: []u8, prev_char: u8, prev_token: Token, indent: *usize) Token {
                 printToken(current_token, indent);
                 pos += 1;
             },
+            '"' => {
+                start = pos;
+                pos += 1;
+                while (!isEndOfStr(buf[pos], if (pos == 0) prev_char else buf[pos - 1])) {
+                    pos += 1;
+                }
+                // Consume closing quotes.
+                pos += 1;
+                current_token = Token{ .STRING = buf[start..pos] };
+                printToken(current_token, indent);
+            },
             else => {
                 pos += 1;
             },
@@ -104,14 +127,14 @@ fn scanBuf(buf: []u8, prev_char: u8, prev_token: Token, indent: *usize) Token {
 fn printToken(token: Token, indent: *usize) void {
     switch (token) {
         Token.START => undefined,
+        Token.STRING => |s| std.debug.warn("{}", .{s}),
+        Token.LBRACE => std.debug.warn("{{", .{}),
+        Token.RBRACE => std.debug.warn("}}", .{}),
+        Token.LBRACKET => std.debug.warn("]", .{}),
+        Token.RBRACKET => std.debug.warn("[", .{}),
         Token.COLON => std.debug.warn(": ", .{}),
-        Token.COMMA => {
-            std.debug.warn(",\n", .{});
-            printIndent(indent.*);
-        },
-        else => {
-            std.debug.warn("", .{});
-        },
+        Token.COMMA => std.debug.warn(",", .{}),
+        else => std.debug.warn("", .{}),
     }
 }
 
@@ -123,4 +146,12 @@ fn printIndent(n: usize) void {
     }) {
         std.debug.warn(tab, .{});
     }
+}
+
+fn isEndOfStr(char: u8, prev_char: u8) bool {
+    if (char == '"') {
+        if (prev_char == '\\') return false;
+        return true;
+    }
+    return false;
 }

@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const BUFFER_LENGTH = 8;
+const BUFFER_LENGTH = 1;
 
 const TokenTag = enum {
     START,
@@ -38,6 +38,8 @@ var prev_token: Token = Token{ .START = undefined };
 // Current indent level.
 var indent: usize = 0;
 
+var in_middle_of_string = false;
+
 pub fn main() !void {
     // TODO, check for a file-path argument, and read that to stream if present.
 
@@ -54,6 +56,7 @@ fn scan(stream: *std.io.InStream(std.os.ReadError)) !void {
         const last_token = scanBuf();
         prev_char = buf[BUFFER_LENGTH - 1];
         prev_token = last_token;
+        std.time.sleep(250 * std.time.millisecond);
     }
 
     // End with newline.
@@ -65,6 +68,23 @@ fn scanBuf() Token {
     var pos: usize = 0;
     var start: usize = undefined;
     var current_token: Token = undefined;
+
+    if (in_middle_of_string) {
+        start = pos;
+        while (!(pos == end) and !isEndOfStr(buf[pos], if (pos == 0) prev_char else buf[pos - 1])) {
+            pos += 1;
+        }
+        if (pos == end) {
+            current_token = Token{ .STRING = buf[start..pos] };
+            printToken(current_token);
+        } else {
+            in_middle_of_string = false;
+            // Consume closing quotes.
+            pos += 1;
+            current_token = Token{ .STRING = buf[start..pos] };
+            printToken(current_token);
+        }
+    }
 
     while (pos != end) {
         const c = buf[pos];
@@ -109,6 +129,7 @@ fn scanBuf() Token {
                 if (pos == end) {
                     current_token = Token{ .STRING = buf[start..pos] };
                     printToken(current_token);
+                    in_middle_of_string = true;
                 } else {
                     // Consume closing quotes.
                     pos += 1;

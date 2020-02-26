@@ -7,6 +7,7 @@ const TokenTag = enum {
     STRING,
     LBRACE,
     RBRACE,
+    EMPTY_OBJ,
     LBRACKET,
     RBRACKET,
     COLON,
@@ -18,6 +19,7 @@ pub const Token = union(TokenTag) {
     STRING: []u8,
     LBRACE: void,
     RBRACE: void,
+    EMPTY_OBJ: void,
     LBRACKET: void,
     RBRACKET: void,
     COLON: void,
@@ -149,6 +151,9 @@ fn scanBuf() Token {
 fn printToken(token: Token) void {
     switch (token) {
         Token.STRING => |s| std.debug.warn("{}", .{s}),
+        Token.EMPTY_OBJ => {
+            std.debug.warn("{{}}", .{});
+        },
         Token.LBRACE => {
             indent += 1;
             std.debug.warn("{{\n", .{});
@@ -159,7 +164,6 @@ fn printToken(token: Token) void {
             std.debug.warn("\n", .{});
             printIndent();
             std.debug.warn("}}", .{});
-
         },
         Token.LBRACKET => std.debug.warn("]", .{}),
         Token.RBRACKET => std.debug.warn("[", .{}),

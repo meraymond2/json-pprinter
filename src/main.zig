@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const BUFFER_LENGTH = 1024;
+const BUFFER_LENGTH = 8;
 
 const TokenTag = enum {
     START,
@@ -155,3 +155,20 @@ fn isEndOfStr(char: u8, prev_char: u8) bool {
     }
     return false;
 }
+
+// '"' => {
+//     start = pos;
+//     pos += 1;
+//     while (!(pos == end) and !isEndOfStr(buf[pos], if (pos == 0) prev_char else buf[pos - 1])) {
+//         pos += 1;
+//     }
+//     if (pos == end) {
+//         current_token = Token{ .STRING_PART = buf[start..pos] };
+//         printToken(current_token, indent);
+//     } else {
+//         // Consume closing quotes.
+//         pos += 1;
+//         current_token = Token{ .STRING = buf[start..pos] };
+//         printToken(current_token, indent);
+//     }
+// },

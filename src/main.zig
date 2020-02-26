@@ -56,7 +56,7 @@ fn scan(stream: *std.io.InStream(std.os.ReadError)) !void {
         const last_token = scanBuf();
         prev_char = buf[BUFFER_LENGTH - 1];
         prev_token = last_token;
-        std.time.sleep(250 * std.time.millisecond);
+        std.time.sleep(50 * std.time.millisecond);
     }
 
     // End with newline.
@@ -148,21 +148,33 @@ fn scanBuf() Token {
 
 fn printToken(token: Token) void {
     switch (token) {
-        Token.START => undefined,
         Token.STRING => |s| std.debug.warn("{}", .{s}),
-        Token.LBRACE => std.debug.warn("{{", .{}),
-        Token.RBRACE => std.debug.warn("}}", .{}),
+        Token.LBRACE => {
+            indent += 1;
+            std.debug.warn("{{\n", .{});
+            printIndent();
+        },
+        Token.RBRACE => {
+            indent -= 1;
+            std.debug.warn("\n", .{});
+            printIndent();
+            std.debug.warn("}}", .{});
+
+        },
         Token.LBRACKET => std.debug.warn("]", .{}),
         Token.RBRACKET => std.debug.warn("[", .{}),
         Token.COLON => std.debug.warn(": ", .{}),
-        Token.COMMA => std.debug.warn(",", .{}),
+        Token.COMMA => {
+            std.debug.warn(",\n", .{});
+            printIndent();
+        },
         else => std.debug.warn("", .{}),
     }
 }
 
 fn printIndent() void {
     const tab = "  ";
-    var i = n;
+    var i = indent;
     while (i > 0) : ({
         i -= 1;
     }) {
@@ -177,20 +189,3 @@ fn isEndOfStr(char: u8, prev: u8) bool {
     }
     return false;
 }
-
-// '"' => {
-//     start = pos;
-//     pos += 1;
-//     while (!(pos == end) and !isEndOfStr(buf[pos], if (pos == 0) prev_char else buf[pos - 1])) {
-//         pos += 1;
-//     }
-//     if (pos == end) {
-//         current_token = Token{ .STRING_PART = buf[start..pos] };
-//         printToken(current_token, indent);
-//     } else {
-//         // Consume closing quotes.
-//         pos += 1;
-//         current_token = Token{ .STRING = buf[start..pos] };
-//         printToken(current_token, indent);
-//     }
-// },

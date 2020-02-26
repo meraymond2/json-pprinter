@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const BUFFER_LENGTH = 128;
+const BUFFER_LENGTH = 8;
 
 const TokenTag = enum {
     START,
@@ -102,13 +102,19 @@ fn scanBuf() Token {
             '"' => {
                 start = pos;
                 pos += 1;
-                while (!isEndOfStr(buf[pos], if (pos == 0) prev_char else buf[pos - 1])) {
+
+                while (!(pos == end) and !isEndOfStr(buf[pos], if (pos == 0) prev_char else buf[pos - 1])) {
                     pos += 1;
                 }
-                // Consume closing quotes.
-                pos += 1;
-                current_token = Token{ .STRING = buf[start..pos] };
-                printToken(current_token);
+                if (pos == end) {
+                    current_token = Token{ .STRING = buf[start..pos] };
+                    printToken(current_token);
+                } else {
+                    // Consume closing quotes.
+                    pos += 1;
+                    current_token = Token{ .STRING = buf[start..pos] };
+                    printToken(current_token);
+                }
             },
             else => {
                 pos += 1;
